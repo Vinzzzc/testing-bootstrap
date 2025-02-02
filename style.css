@@ -1,0 +1,31 @@
+section {
+  padding-top: 100px;
+}
+.hero-box .box p{
+  font-size: 17px;
+  width: 500px;
+}
+.hero-box .box img{
+  width: 500px;
+}
+
+@media (max-width: 992px){
+  .hero-box .box p {
+    font-size: 15px;
+    width: 300px;
+  }
+  .hero-box .box img {
+    width: 400px;
+  }
+}
+@media(max-width: 768px){
+  .hero{
+    padding-top: 50px;
+  }
+  .hero-box{
+    text-align: center;
+  }
+  .hero-box .box p {
+    width: 100%;
+  }
+}
