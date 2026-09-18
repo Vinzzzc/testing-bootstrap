@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Keke & DAVIN Photobooth</title>
+  <title>!Keke & Davin Photobooth</title>
   <!-- PeerJS untuk koneksi 2 HP -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
@@ -119,7 +119,6 @@
       filter: sepia(0.2) contrast(1.05) brightness(0.95);
     }
 
-    /* Penyesuaian Cermin Video */
     .mirror { transform: scaleX(-1); }
 
     #countdown {
@@ -127,7 +126,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 100px;
+      font-size: 90px;
       color: #fff;
       font-weight: bold;
       text-shadow: 0 0 20px rgba(0,0,0,0.8);
@@ -186,7 +185,7 @@
     .sticker-choice:hover { background: #f0e6d2; transform: scale(1.05); }
     .sticker-choice img { width: 32px; height: 32px; object-fit: contain; }
 
-    /* Preview Canvas Ramping & Interaktif Stiker */
+    /* Canvas Wrapper & Stiker */
     .canvas-wrapper {
       position: relative;
       display: inline-block;
@@ -200,7 +199,7 @@
 
     #stripCanvas {
       display: block;
-      width: 220px; /* Ukuran preview ramping proporsional */
+      width: 220px;
       height: auto;
     }
 
@@ -210,15 +209,16 @@
       pointer-events: none;
     }
 
-    /* Stiker Interaktif */
+    /* Stiker Interaktif Bebas Error */
     .draggable-sticker {
       position: absolute;
       width: 55px;
       height: 55px;
-      cursor: grab;
+      cursor: move;
       user-select: none;
       pointer-events: auto;
       touch-action: none;
+      transform-origin: center center;
     }
     .draggable-sticker.selected {
       outline: 1.5px dashed #6b5344;
@@ -228,10 +228,10 @@
 
     .sticker-controls {
       position: absolute;
-      top: -22px;
-      right: -22px;
+      top: -24px;
+      right: -24px;
       display: none;
-      gap: 3px;
+      gap: 2px;
       z-index: 20;
     }
     .draggable-sticker.selected .sticker-controls { display: flex; }
@@ -240,14 +240,15 @@
       color: white;
       border: none;
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      font-size: 9px;
+      width: 22px;
+      height: 22px;
+      font-size: 10px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
 
     .btn-group {
@@ -268,7 +269,7 @@
 </head>
 <body>
 
-  <h1>keke & DAVIN</h1>
+  <h1>Keke & Davin</h1>
   <p class="subtitle">our photobooth collection</p>
 
   <!-- Panel Kode Room -->
@@ -285,7 +286,7 @@
 
   <!-- Area Live Kamera Split -->
   <div class="viewfinders">
-    <div id="countdown">3</div>
+    <div id="countdown">15</div>
     <div class="video-container">
       <span class="label" id="leftLabel">Kiri (Host)</span>
       <video id="leftVideo" class="mirror" autoplay playsinline muted></video>
@@ -331,8 +332,8 @@
     </div>
 
     <div class="btn-group">
-      <button id="downloadBtn">Download Single Strip</button>
-      <button id="shareBtn">Bagikan (2 Strip Couple)</button>
+      <button id="downloadBtn">Download Single Strip HD</button>
+      <button id="shareBtn">Bagikan (Story IG HD)</button>
     </div>
   </div>
 
@@ -374,7 +375,7 @@
           video: { width: { ideal: 1080 }, height: { ideal: 1080 }, facingMode: "user" }, 
           audio: false 
         });
-        leftVideo.srcObject = localStream; // Default lokal di kiri
+        leftVideo.srcObject = localStream; 
         initPeer();
       } catch (err) {
         alert("Gagal mengaktifkan kamera: " + err.message);
@@ -385,13 +386,12 @@
       peer = new Peer(myCode);
       peer.on('open', (id) => { myCodeDisplay.innerText = id; });
       
-      // Menerima sambungan -> BERPERAN SEBAGAI HOST (KIRI)
       peer.on('call', (call) => {
         isHost = true;
         updateRoleLabels();
         call.answer(localStream);
         call.on('stream', (remoteStream) => {
-          rightVideo.srcObject = remoteStream; // Kamera remote di kanan
+          rightVideo.srcObject = remoteStream;
           setConnectedState();
         });
       });
@@ -402,7 +402,6 @@
       });
     }
 
-    // Melakukan sambungan -> BERPERAN SEBAGAI GUEST (KANAN)
     joinBtn.addEventListener('click', () => {
       const targetCode = joinCodeInput.value.trim();
       if (!targetCode || targetCode.length !== 6) { alert("Masukkan 6 digit kode room!"); return; }
@@ -410,7 +409,6 @@
       isHost = false;
       updateRoleLabels();
 
-      // Kamera lokal dipindah ke kanan, kamera teman di kiri
       rightVideo.srcObject = localStream;
 
       const call = peer.call(targetCode, localStream);
@@ -462,7 +460,7 @@
       activeStickers = [];
 
       for (let i = 0; i < 4; i++) {
-        await runCountdown(3);
+        await runCountdown(15); // Timer 15 detik
         captureDualPhotoData();
       }
 
@@ -493,7 +491,6 @@
       });
     }
 
-    // Mengambil foto secara sinkron (Kiri selalu Host, Kanan selalu Guest)
     function captureDualPhotoData() {
       const leftCanvas = document.createElement('canvas');
       const rightCanvas = document.createElement('canvas');
@@ -506,12 +503,10 @@
       lCtx.filter = "sepia(0.2) contrast(1.05) brightness(0.95)";
       rCtx.filter = "sepia(0.2) contrast(1.05) brightness(0.95)";
 
-      // Gambar Kiri (Host - selalu cermin)
       lCtx.translate(540, 0);
       lCtx.scale(-1, 1);
       drawCroppedVideo(lCtx, leftVideo, 540, 540);
 
-      // Gambar Kanan (Guest - selalu cermin)
       rCtx.translate(540, 0);
       rCtx.scale(-1, 1);
       drawCroppedVideo(rCtx, rightVideo, 540, 540);
@@ -534,10 +529,10 @@
       targetCtx.drawImage(videoElem, sX, sY, sW, sH, 0, 0, tW, tH);
     }
 
-    // Render Canvas Strip Utama (Tanpa Gap Kosong)
+    // Render Strip Utama
     function renderFinalStrip() {
       canvas.width = 800;  
-      canvas.height = 1920; // Disesuaikan rapat tanpa space kosong lebih
+      canvas.height = 1920; 
 
       ctx.fillStyle = currentBgColor; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -547,14 +542,12 @@
       const photoH = 365;  
       const gapY = 8;     
 
-      // 4 Baris Foto
       capturedPhotoFrames.forEach((frame, index) => {
         const currentY = padding + index * (photoH + gapY);
         ctx.drawImage(frame.left, padding, currentY, photoW, photoH);
         ctx.drawImage(frame.right, padding + photoW, currentY, photoW, photoH);
       });
 
-      // Teks & Tanggal Tepat di Bawah Foto Terakhir (Sesuai Referensi Original)
       const textColor = (currentBgColor === "#1e1e24") ? "#ffffff" : "#6b5344";
       const bottomStartY = padding + 4 * (photoH + gapY) + 40;
 
@@ -572,7 +565,7 @@
       ctx.fillText(dateStr, canvas.width / 2, bottomStartY + 45);
     }
 
-    // --- MANAJEMEN STIKER MULUS & RESPONSIF ---
+    // --- MANAJEMEN STIKER BEBAS ERROR ---
     function addSticker(imgUrl) {
       const stickerEl = document.createElement('div');
       stickerEl.className = 'draggable-sticker selected';
@@ -589,10 +582,10 @@
       const controls = document.createElement('div');
       controls.className = 'sticker-controls';
       controls.innerHTML = `
-        <button class="s-btn" onclick="rotateSticker(event, this)">🔄</button>
-        <button class="s-btn" onclick="scaleSticker(event, this, 1.2)">➕</button>
-        <button class="s-btn" onclick="scaleSticker(event, this, 0.8)">➖</button>
-        <button class="s-btn" style="background:#d9534f;" onclick="removeSticker(event, this)">❌</button>
+        <button class="s-btn" type="button" data-action="rotate">🔄</button>
+        <button class="s-btn" type="button" data-action="plus">➕</button>
+        <button class="s-btn" type="button" data-action="minus">➖</button>
+        <button class="s-btn" type="button" style="background:#d9534f;" data-action="delete">❌</button>
       `;
       stickerEl.appendChild(controls);
 
@@ -608,62 +601,57 @@
       };
       activeStickers.push(stickerData);
 
+      // Event listener tombol kontrol stiker
+      controls.addEventListener('pointerdown', (e) => e.stopPropagation());
+      controls.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = e.target.getAttribute('data-action');
+        if (action === 'rotate') {
+          stickerData.rotation = (stickerData.rotation + 45) % 360;
+        } else if (action === 'plus') {
+          stickerData.size = Math.min(180, stickerData.size * 1.2);
+        } else if (action === 'minus') {
+          stickerData.size = Math.max(25, stickerData.size * 0.8);
+        } else if (action === 'delete') {
+          activeStickers = activeStickers.filter(s => s !== stickerData);
+          stickerEl.remove();
+          return;
+        }
+        updateStickerTransform(stickerData);
+      });
+
+      // Pointer drag smooth
       stickerEl.addEventListener('pointerdown', (e) => {
+        if (e.target.tagName === 'BUTTON') return;
         document.querySelectorAll('.draggable-sticker').forEach(el => el.classList.remove('selected'));
         stickerEl.classList.add('selected');
-        initDrag(e, stickerEl, stickerData);
+
+        let startX = e.clientX - stickerData.x;
+        let startY = e.clientY - stickerData.y;
+
+        function onPointerMove(ev) {
+          stickerData.x = ev.clientX - startX;
+          stickerData.y = ev.clientY - startY;
+          updateStickerTransform(stickerData);
+        }
+
+        function onPointerUp() {
+          window.removeEventListener('pointermove', onPointerMove);
+          window.removeEventListener('pointerup', onPointerUp);
+        }
+
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
       });
     }
 
-    function initDrag(e, element, data) {
-      if (e.target.tagName === 'BUTTON') return;
-      let startX = e.clientX - data.x;
-      let startY = e.clientY - data.y;
-
-      function onPointerMove(ev) {
-        data.x = ev.clientX - startX;
-        data.y = ev.clientY - startY;
-        element.style.left = data.x + 'px';
-        element.style.top = data.y + 'px';
-      }
-
-      function onPointerUp() {
-        window.removeEventListener('pointermove', onPointerMove);
-        window.removeEventListener('pointerup', onPointerUp);
-      }
-
-      window.addEventListener('pointermove', onPointerMove);
-      window.addEventListener('pointerup', onPointerUp);
-      e.stopPropagation();
+    function updateStickerTransform(data) {
+      data.element.style.left = data.x + 'px';
+      data.element.style.top = data.y + 'px';
+      data.element.style.width = data.size + 'px';
+      data.element.style.height = data.size + 'px';
+      data.element.style.transform = `rotate(${data.rotation}deg)`;
     }
-
-    window.rotateSticker = function(e, btn) {
-      e.stopPropagation();
-      const sticker = btn.closest('.draggable-sticker');
-      const data = activeStickers.find(s => s.element === sticker);
-      if (data) {
-        data.rotation = (data.rotation + 45) % 360;
-        sticker.style.transform = `rotate(${data.rotation}deg)`;
-      }
-    };
-
-    window.scaleSticker = function(e, btn, factor) {
-      e.stopPropagation();
-      const sticker = btn.closest('.draggable-sticker');
-      const data = activeStickers.find(s => s.element === sticker);
-      if (data) {
-        data.size = Math.max(25, Math.min(180, data.size * factor));
-        sticker.style.width = data.size + 'px';
-        sticker.style.height = data.size + 'px';
-      }
-    };
-
-    window.removeSticker = function(e, btn) {
-      e.stopPropagation();
-      const sticker = btn.closest('.draggable-sticker');
-      activeStickers = activeStickers.filter(s => s.element !== sticker);
-      sticker.remove();
-    };
 
     colorBtns.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -674,7 +662,6 @@
       });
     });
 
-    // Helper untuk menggabungkan stiker ke atas canvas
     async function renderStickersToCanvas(targetCtx, targetCanvas) {
       const displayRect = canvas.getBoundingClientRect();
       const scaleFactor = targetCanvas.width / displayRect.width;
@@ -701,7 +688,7 @@
       }
     }
 
-    // 1. Download Single Photo Strip HD
+    // 1. Download Single Strip HD
     downloadBtn.addEventListener('click', async () => {
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = canvas.width;
@@ -712,14 +699,13 @@
       await renderStickersToCanvas(fCtx, finalCanvas);
 
       const link = document.createElement('a');
-      link.download = 'keke_davin_photostrip.png';
+      link.download = 'Keke_Davin_photostrip.png';
       link.href = finalCanvas.toDataURL('image/png', 1.0);
       link.click();
     });
 
-    // 2. Download / Bagikan Format Couple (2 Photo Strip Berdampingan ala getangie.com)
+    // 2. Download / Bagikan Format Instagram Story HD (1080 x 1920)
     shareBtn.addEventListener('click', async () => {
-      // Menyiapkan single strip bertumpuk stiker
       const singleCanvas = document.createElement('canvas');
       singleCanvas.width = canvas.width;
       singleCanvas.height = canvas.height;
@@ -727,48 +713,48 @@
       sCtx.drawImage(canvas, 0, 0);
       await renderStickersToCanvas(sCtx, singleCanvas);
 
-      // Canvas Pasangan (Social Media / Story Format 1080x1920)
+      // Standar Instagram Story Canvas HD 1080 x 1920
       const shareCanvas = document.createElement('canvas');
-      shareCanvas.width = 1200;
-      shareCanvas.height = 1600;
+      shareCanvas.width = 1080;
+      shareCanvas.height = 1920;
       const shCtx = shareCanvas.getContext('2d');
 
-      // Background Pasangan
+      // Background Estetik
       shCtx.fillStyle = "#f4efe6";
       shCtx.fillRect(0, 0, shareCanvas.width, shareCanvas.height);
 
-      // Judul Nama di Atas
+      // Judul Nama
       shCtx.fillStyle = "#5a4638";
-      shCtx.font = "bold 52px 'Comic Sans MS', sans-serif";
+      shCtx.font = "bold 58px 'Comic Sans MS', sans-serif";
       shCtx.textAlign = "center";
-      shCtx.fillText("keke & DAVIN", shareCanvas.width / 2, 110);
+      shCtx.fillText("Keke & Davin", shareCanvas.width / 2, 180);
 
-      shCtx.font = "30px 'Comic Sans MS', sans-serif";
+      shCtx.font = "32px 'Comic Sans MS', sans-serif";
       shCtx.fillStyle = "#8c7a6b";
-      shCtx.fillText("our photobooth collection", shareCanvas.width / 2, 160);
+      shCtx.fillText("our photobooth collection", shareCanvas.width / 2, 235);
 
-      // Mengatur Posisi 2 Photo Strip Berdampingan
-      const stripW = 480;
+      // Mengatur Ukuran 2 Strip Berdampingan
+      const stripW = 430;
       const stripH = (canvas.height / canvas.width) * stripW;
-      const startY = 220;
+      const startY = 300;
 
-      // Strip Kiri
+      // Strip Kiri (HD)
       shCtx.save();
       shCtx.shadowColor = "rgba(0,0,0,0.15)";
-      shCtx.shadowBlur = 20;
+      shCtx.shadowBlur = 25;
       shCtx.drawImage(singleCanvas, 80, startY, stripW, stripH);
       shCtx.restore();
 
-      // Strip Kanan
+      // Strip Kanan (HD)
       shCtx.save();
       shCtx.shadowColor = "rgba(0,0,0,0.15)";
-      shCtx.shadowBlur = 20;
-      shCtx.drawImage(singleCanvas, 640, startY, stripW, stripH);
+      shCtx.shadowBlur = 25;
+      shCtx.drawImage(singleCanvas, 570, startY, stripW, stripH);
       shCtx.restore();
 
-      // Download Gambar Couple Siap Bagikan
+      // Download Gambar IG Story HD
       const link = document.createElement('a');
-      link.download = 'keke_davin_couple_share.png';
+      link.download = 'Keke_Davin_IG_Story.png';
       link.href = shareCanvas.toDataURL('image/png', 1.0);
       link.click();
     });
