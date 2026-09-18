@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>For U KEKEEE</title>
+  <title>GetAngie Style Online Photobooth + Stickers</title>
   <!-- PeerJS untuk koneksi 2 HP -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
@@ -78,11 +78,11 @@
     button:hover:not(:disabled) { background-color: #523e31; }
     button:disabled { background-color: #ccc; cursor: not-allowed; }
 
-    /* Tampilan Split Screen Live Kamera (Dibuat Sangat Rapat) */
+    /* Tampilan Split Screen Live Kamera */
     .viewfinders {
       position: relative;
       display: flex;
-      gap: 0px; /* Benar-benar rapat tanpa jarak */
+      gap: 0px; 
       width: 100%;
       max-width: 650px;
       background: #ffffff;
@@ -144,43 +144,78 @@
       max-width: 650px;
     }
 
-    /* Panel Pilihan Warna Setelah Foto Jadi */
-    .color-picker-box {
+    /* Panel Kustomisasi (Warna & Aset Stiker) */
+    .customization-box {
       background: #fff;
       padding: 15px;
       border-radius: 12px;
       display: none;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       width: 100%;
       box-shadow: 0 4px 12px rgba(0,0,0,0.05);
       border: 1px solid #e8dec8;
     }
 
-    .color-options {
-      display: flex;
-      gap: 12px;
-    }
-
+    .color-options { display: flex; gap: 12px; }
     .color-btn {
-      width: 35px;
-      height: 35px;
-      border-radius: 50%;
-      border: 2px solid #ccc;
-      cursor: pointer;
-      transition: 0.2s;
+      width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; transition: 0.2s;
     }
     .color-btn.active { border-color: #5a4638; transform: scale(1.15); }
 
-    /* Tampilan Preview Photo Strip di Layar */
+    /* Pilihan Aset Stiker */
+    .sticker-options {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .sticker-choice {
+      width: 50px;
+      height: 50px;
+      border: 1px dashed #b5a491;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #faf7f2;
+      transition: 0.2s;
+    }
+    .sticker-choice:hover { background: #f0e6d2; transform: scale(1.05); }
+    .sticker-choice img { width: 35px; height: 35px; object-fit: contain; }
+
+    /* Area Preview Canvas & Dragging Stiker */
+    .canvas-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-top: 15px;
+      display: none;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      border-radius: 6px;
+      overflow: hidden;
+      touch-action: none; /* Mencegah scroll layar HP saat menggeser stiker */
+    }
+
     #stripCanvas {
+      display: block;
       width: 260px;
       height: auto;
-      border-radius: 6px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-      display: none;
     }
+
+    /* Elemen Stiker yang bisa digeser-geser */
+    .draggable-sticker {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      cursor: grab;
+      user-select: none;
+      display: none;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+    }
+    .draggable-sticker:active { cursor: grabbing; }
+    .draggable-sticker img { width: 100%; height: 100%; object-fit: contain; }
 
     #downloadBtn { background-color: #8c7a6b; display: none; width: 100%; padding: 14px; font-size: 16px; }
     #downloadBtn:hover { background-color: #6b5344; }
@@ -188,8 +223,8 @@
 </head>
 <body>
 
-  <h1>For U Keke</h1>
-  <p class="subtitle">Love You</p>
+  <h1>keke & DAVIN</h1>
+  <p class="subtitle">our photobooth • getangie.com style</p>
 
   <!-- Panel Kode Room -->
   <div class="room-card">
@@ -203,15 +238,13 @@
     </div>
   </div>
 
-  <!-- Area Dual Viewfinder Split Kiri-Kanan (Rapat Tanpa Gap) -->
+  <!-- Area Dual Viewfinder Split Kiri-Kanan -->
   <div class="viewfinders">
     <div id="countdown">3</div>
-
     <div class="video-container">
       <span class="label">Kamu (Kiri)</span>
       <video id="localVideo" autoplay playsinline muted></video>
     </div>
-
     <div class="video-container">
       <span class="label" id="remoteLabel">Menunggu Teman...</span>
       <video id="remoteVideo" autoplay playsinline></video>
@@ -221,23 +254,40 @@
   <div class="action-panel">
     <button id="startBtn" class="primary-btn" disabled style="padding: 15px 40px; font-size: 16px; width:100%;">Mulai Foto (4x)</button>
     
-    <!-- Pilihan Warna Bingkai (Muncul setelah foto jadi) -->
-    <div id="colorPickerBox" class="color-picker-box">
-      <span style="font-size: 13px; font-weight: bold; color: #6b5344;">Pilih Warna Bingkai:</span>
-      <div class="color-options">
-        <div class="color-btn active" style="background: #f5ebd9;" data-color="#f5ebd9" title="Krem Klasik"></div>
-        <div class="color-btn" style="background: #ffffff;" data-color="#ffffff" title="Putih Bersih"></div>
-        <div class="color-btn" style="background: #1e1e24;" data-color="#1e1e24" title="Hitam Elegan"></div>
-        <div class="color-btn" style="background: #ffccd5;" data-color="#ffccd5" title="Soft Pink"></div>
-        <div class="color-btn" style="background: #bde0fe;" data-color="#bde0fe" title="Soft Blue"></div>
-        <div class="color-btn" style="background: #c8d6e5;" data-color="#c8d6e5" title="Grey Pastel"></div>
+    <!-- Panel Kustomisasi (Warna & Aset Stiker) -->
+    <div id="customizationBox" class="customization-box">
+      <div>
+        <span style="font-size: 12px; font-weight: bold; color: #6b5344; display:block; margin-bottom:6px;">Pilih Warna Bingkai:</span>
+        <div class="color-options">
+          <div class="color-btn active" style="background: #f5ebd9;" data-color="#f5ebd9"></div>
+          <div class="color-btn" style="background: #ffffff;" data-color="#ffffff"></div>
+          <div class="color-btn" style="background: #1e1e24;" data-color="#1e1e24"></div>
+          <div class="color-btn" style="background: #ffccd5;" data-color="#ffccd5"></div>
+          <div class="color-btn" style="background: #bde0fe;" data-color="#bde0fe"></div>
+        </div>
+      </div>
+
+      <div style="width: 100%; border-top: 1px solid #f0e6d2; padding-top: 10px;">
+        <span style="font-size: 12px; font-weight: bold; color: #6b5344; display:block; margin-bottom:6px;">Tambah Aset Stiker (Klik untuk pasang):</span>
+        <div class="sticker-options">
+          <!-- Ganti URL link gambar di bawah ini dengan aset stiker buatanmu sendiri -->
+          <div class="sticker-choice" onclick="addSticker('https://api.iconify.design/fluent-emoji:red-heart.svg')"><img src="https://api.iconify.design/fluent-emoji:red-heart.svg"></div>
+          <div class="sticker-choice" onclick="addSticker('https://api.iconify.design/fluent-emoji:sparkles.svg')"><img src="https://api.iconify.design/fluent-emoji:sparkles.svg"></div>
+          <div class="sticker-choice" onclick="addSticker('https://api.iconify.design/fluent-emoji:star.svg')"><img src="https://api.iconify.design/fluent-emoji:star.svg"></div>
+          <div class="sticker-choice" onclick="addSticker('https://api.iconify.design/fluent-emoji:ribbon.svg')"><img src="https://api.iconify.design/fluent-emoji:ribbon.svg"></div>
+          <div class="sticker-choice" onclick="addSticker('https://api.iconify.design/fluent-emoji:cherry-blossom.svg')"><img src="https://api.iconify.design/fluent-emoji:cherry-blossom.svg"></div>
+        </div>
       </div>
     </div>
 
-    <canvas id="stripCanvas"></canvas>
-    <a id="downloadLink" download="our_photobooth.png" style="width: 100%;">
-      <button id="downloadBtn">Download Photo Strip HD</button>
-    </a>
+    <!-- Area Kanvas & Drag Stiker -->
+    <div id="canvasWrapper" class="canvas-wrapper">
+      <canvas id="stripCanvas"></canvas>
+      <!-- Wadah stiker interaktif -->
+      <div id="stickerLayer"></div>
+    </div>
+
+    <button id="downloadBtn">Download Photo Strip HD</button>
   </div>
 
   <script>
@@ -252,18 +302,18 @@
     const canvas = document.getElementById('stripCanvas');
     const ctx = canvas.getContext('2d');
     const downloadBtn = document.getElementById('downloadBtn');
-    const downloadLink = document.getElementById('downloadLink');
-    const colorPickerBox = document.getElementById('colorPickerBox');
+    const customizationBox = document.getElementById('customizationBox');
     const colorBtns = document.querySelectorAll('.color-btn');
+    const canvasWrapper = document.getElementById('canvasWrapper');
+    const stickerLayer = document.getElementById('stickerLayer');
 
     let peer = null;
     let dataConnection = null;
     let localStream = null;
     let isConnected = false;
-    let currentBgColor = "#f5ebd9"; // Default warna krem
-
-    // Menyimpan memori hasil tangkapan foto mentah agar bisa di-re-color instant
+    let currentBgColor = "#f5ebd9";
     let capturedPhotoFrames = []; 
+    let activeStickers = []; // Menyimpan data posisi stiker
 
     const myCode = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -298,10 +348,7 @@
 
     joinBtn.addEventListener('click', () => {
       const targetCode = joinCodeInput.value.trim();
-      if (!targetCode || targetCode.length !== 6) {
-        alert("Masukkan 6 digit kode room!");
-        return;
-      }
+      if (!targetCode || targetCode.length !== 6) { alert("Masukkan 6 digit kode room!"); return; }
       const call = peer.call(targetCode, localStream);
       call.on('stream', (remoteStream) => {
         remoteVideo.srcObject = remoteStream;
@@ -322,39 +369,35 @@
 
     function setupDataListener() {
       dataConnection.on('data', (data) => {
-        if (data.type === 'START_COUNTDOWN') {
-          triggerPhotoSequence();
-        }
+        if (data.type === 'START_COUNTDOWN') { triggerPhotoSequence(); }
       });
     }
 
     startBtn.addEventListener('click', () => {
       if (!isConnected) return;
-      if (dataConnection) {
-        dataConnection.send({ type: 'START_COUNTDOWN' });
-      }
+      if (dataConnection) { dataConnection.send({ type: 'START_COUNTDOWN' }); }
       triggerPhotoSequence();
     });
 
     async function triggerPhotoSequence() {
       startBtn.disabled = true;
-      canvas.style.display = 'none';
+      canvasWrapper.style.display = 'none';
       downloadBtn.style.display = 'none';
-      colorPickerBox.style.display = 'none';
+      customizationBox.style.display = 'none';
       capturedPhotoFrames = [];
+      stickerLayer.innerHTML = '';
+      activeStickers = [];
 
-      // Mengambil 4 Foto Berturut-turut
       for (let i = 0; i < 4; i++) {
         await runCountdown(3);
         captureDualPhotoData();
       }
 
-      // Render pertama kali ke canvas
       renderFinalStrip();
 
       startBtn.disabled = false;
-      canvas.style.display = 'block';
-      colorPickerBox.style.display = 'flex';
+      canvasWrapper.style.display = 'inline-block';
+      customizationBox.style.display = 'flex';
       downloadBtn.style.display = 'block';
     }
 
@@ -363,7 +406,6 @@
         countdownEl.style.display = 'block';
         let count = seconds;
         countdownEl.innerText = count;
-
         const timer = setInterval(() => {
           count--;
           if (count > 0) {
@@ -377,7 +419,6 @@
       });
     }
 
-    // Ambil data gambar mentah dari video kiri & kanan secara rapat
     function captureDualPhotoData() {
       const leftCanvas = document.createElement('canvas');
       const rightCanvas = document.createElement('canvas');
@@ -387,16 +428,12 @@
       const lCtx = leftCanvas.getContext('2d');
       const rCtx = rightCanvas.getContext('2d');
 
-      // Set Filter Vintage Sepia
       lCtx.filter = "sepia(0.2) contrast(1.05) brightness(0.95)";
       rCtx.filter = "sepia(0.2) contrast(1.05) brightness(0.95)";
 
-      // Crop & Simpan Kamera Kiri (Mirror)
       lCtx.translate(540, 0);
       lCtx.scale(-1, 1);
       drawCroppedVideo(lCtx, localVideo, 540, 540);
-
-      // Crop & Simpan Kamera Kanan
       drawCroppedVideo(rCtx, remoteVideo, 540, 540);
 
       capturedPhotoFrames.push({ left: leftCanvas, right: rightCanvas });
@@ -417,54 +454,127 @@
       targetCtx.drawImage(videoElem, sX, sY, sW, sH, 0, 0, tW, tH);
     }
 
-    // Fungsi Render Ulang Strip (Dipakai saat ganti warna bingkai)
     function renderFinalStrip() {
-      canvas.width = 1120;  // Lebar presisi agar pas tanpa gap berlebih
+      canvas.width = 1120;  
       canvas.height = 2750;
 
-      // Warna Bingkai Sesuai Pilihan
       ctx.fillStyle = currentBgColor; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const padding = 50; // Margin luar bingkai tipis
-      const photoW = 510;  // Lebar tiap kotak foto
-      const photoH = 510;  // Tinggi kotak foto (persegi 1:1)
-      const gapY = 12;     // Jarak vertikal antar baris foto yang sangat rapat
+      const padding = 50; 
+      const photoW = 510;  
+      const photoH = 510;  
+      const gapY = 12;     
 
       capturedPhotoFrames.forEach((frame, index) => {
         const currentY = padding + index * (photoH + gapY);
-
-        // Kiri & Kanan saling menempel rapat tanpa gap horizontal (gap = 0)
         ctx.drawImage(frame.left, padding, currentY, photoW, photoH);
         ctx.drawImage(frame.right, padding + photoW, currentY, photoW, photoH);
       });
 
-      // Tanggal Otomatis di Bawah Strip
       const now = new Date();
       const dateStr = now.getFullYear() + '.' + 
                       String(now.getMonth() + 1).padStart(2, '0') + '.' + 
                       String(now.getDate()).padStart(2, '0');
 
-      // Menyesuaikan warna teks tanggal otomatis agar kontras dengan warna bingkai
       ctx.fillStyle = (currentBgColor === "#1e1e24") ? "#ffffff" : "#6b5344";
       ctx.font = "bold 45px Arial";
       ctx.textAlign = "center";
       ctx.fillText(dateStr, canvas.width / 2, canvas.height - 70);
-
-      downloadLink.href = canvas.toDataURL('image/png', 1.0);
     }
 
-    // Event Listener untuk Pilihan Warna Bingkai
+    // --- FITUR TAMBAH & DRAG STIKER INTERAKTIF ---
+    function addSticker(imgUrl) {
+      const stickerEl = document.createElement('div');
+      stickerEl.className = 'draggable-sticker';
+      stickerEl.style.display = 'block';
+      stickerEl.style.left = '90px';
+      stickerEl.style.top = '90px';
+
+      const img = document.createElement('img');
+      img.src = imgUrl;
+      stickerEl.appendChild(img);
+      stickerLayer.appendChild(stickerEl);
+
+      const stickerData = { url: imgUrl, element: stickerEl, x: 90, y: 90, size: 70 };
+      activeStickers.push(stickerData);
+
+      initDrag(stickerEl, stickerData);
+    }
+
+    function initDrag(element, data) {
+      let isDragging = false;
+      let startX, startY;
+
+      element.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        startX = e.clientX - data.x;
+        startY = e.clientY - data.y;
+        element.setPointerCapture(e.pointerId);
+        e.stopPropagation();
+      });
+
+      element.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        data.x = e.clientX - startX;
+        data.y = e.clientY - startY;
+        element.style.left = data.x + 'px';
+        element.style.top = data.y + 'px';
+      });
+
+      element.addEventListener('pointerup', (e) => {
+        isDragging = false;
+        element.releasePointerCapture(e.pointerId);
+      });
+    }
+
+    // Ubah warna bingkai
     colorBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         colorBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentBgColor = btn.getAttribute('data-color');
-        
-        if (capturedPhotoFrames.length > 0) {
-          renderFinalStrip(); // Update warna strip secara instan
-        }
+        if (capturedPhotoFrames.length > 0) { renderFinalStrip(); }
       });
+    });
+
+    // Proses Download: Menggabungkan Canvas Foto & Stiker Menjadi 1 Gambar HD Utuh
+    downloadBtn.addEventListener('click', async () => {
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = canvas.width;
+      finalCanvas.height = canvas.height;
+      const fCtx = finalCanvas.getContext('2d');
+
+      // 1. Gambar ulang background dan foto dari canvas utama
+      fCtx.drawImage(canvas, 0, 0);
+
+      // 2. Skala perhitungan posisi stiker dari tampilan kecil ke ukuran resolusi HD asli
+      const displayRect = canvas.getBoundingClientRect();
+      const scaleFactor = canvas.width / displayRect.width;
+
+      // 3. Timpa/gambar semua stiker ke dalam file HD
+      for (let st of activeStickers) {
+        const rect = st.element.getBoundingClientRect();
+        const drawX = (rect.left - displayRect.left) * scaleFactor;
+        const drawY = (rect.top - displayRect.top) * scaleFactor;
+        const drawSize = rect.width * scaleFactor;
+
+        await new Promise((resolve) => {
+          const imgObj = new Image();
+          imgObj.crossOrigin = "anonymous";
+          imgObj.onload = () => {
+            fCtx.drawImage(imgObj, drawX, drawY, drawSize, drawSize);
+            resolve();
+          };
+          imgObj.src = st.url;
+        });
+      }
+
+      // 4. Unduh file gabungan HD
+      const link = document.createElement('a');
+      link.download = 'photobooth_with_stickers.png';
+      link.href = finalCanvas.toDataURL('image/png', 1.0);
+      link.click();
     });
 
     initCamera();
