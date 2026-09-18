@@ -78,7 +78,7 @@
     button:hover:not(:disabled) { background-color: #523e31; }
     button:disabled { background-color: #ccc; cursor: not-allowed; }
 
-    /* Live Kamera Split Kiri-Kanan */
+    /* Live Kamera Split */
     .viewfinders {
       position: relative;
       display: flex;
@@ -158,23 +158,42 @@
       border: 1px solid #e8dec8;
     }
 
-    .color-options { display: flex; gap: 12px; align-items: center; }
-    .color-btn {
-      width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; transition: 0.2s;
+    .bg-options-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
     }
-    .color-btn.active { border-color: #5a4638; transform: scale(1.15); }
-    
-    .bg-img-btn {
-      padding: 4px 10px;
-      font-size: 12px;
-      border-radius: 20px;
-      background: #e8dec8;
-      color: #5a4638;
+
+    .bg-grid {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .bg-thumb-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
       border: 2px solid #ccc;
       cursor: pointer;
+      background-size: cover;
+      background-position: center;
+      transition: 0.2s;
+      font-size: 10px;
       font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #5a4638;
     }
-    .bg-img-btn.active { border-color: #5a4638; background: #6b5344; color: white; }
+    .bg-thumb-btn.active { border-color: #5a4638; transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+
+    .color-btn {
+      width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; transition: 0.2s;
+    }
+    .color-btn.active { border-color: #5a4638; transform: scale(1.15); }
 
     .sticker-options {
       display: flex;
@@ -221,7 +240,6 @@
       pointer-events: none;
     }
 
-    /* Stiker Interaktif */
     .draggable-sticker {
       position: absolute;
       width: 55px;
@@ -314,26 +332,35 @@
     
     <!-- Panel Kustomisasi -->
     <div id="customizationBox" class="customization-box">
-      <div>
-        <span style="font-size: 12px; font-weight: bold; color: #6b5344; display:block; margin-bottom:6px;">Pilih Background Bingkai:</span>
-        <div class="color-options">
-          <div class="bg-img-btn active" data-type="image">Gambar BG</div>
-          <div class="color-btn" style="background: #f5ebd9;" data-type="color" data-color="#f5ebd9"></div>
-          <div class="color-btn" style="background: #ffffff;" data-type="color" data-color="#ffffff"></div>
-          <div class="color-btn" style="background: #1e1e24;" data-type="color" data-color="#1e1e24"></div>
-          <div class="color-btn" style="background: #ffccd5;" data-type="color" data-color="#ffccd5"></div>
-          <div class="color-btn" style="background: #bde0fe;" data-type="color" data-color="#bde0fe"></div>
+      <div class="bg-options-group">
+        <span style="font-size: 12px; font-weight: bold; color: #6b5344; text-align: center;">Pilih Background Gambar (6 Aset):</span>
+        <div class="bg-grid">
+          <div class="bg-thumb-btn active" data-type="image" data-src="gambar/bg-fotostrip.jpg" style="background-image: url('gambar/bg-fotostrip.jpg');">BG 1</div>
+          <div class="bg-thumb-btn" data-type="image" data-src="gambar/bg-fotostrip2.jpg" style="background-image: url('gambar/bg-fotostrip2.jpg');">BG 2</div>
+          <div class="bg-thumb-btn" data-type="image" data-src="gambar/bg-fotostrip3.jpg" style="background-image: url('gambar/bg-fotostrip3.jpg');">BG 3</div>
+          <div class="bg-thumb-btn" data-type="image" data-src="gambar/bg-fotostrip4.jpg" style="background-image: url('gambar/bg-fotostrip4.jpg');">BG 4</div>
+          <div class="bg-thumb-btn" data-type="image" data-src="gambar/bg-fotostrip5.jpg" style="background-image: url('gambar/bg-fotostrip5.jpg');">BG 5</div>
+          <div class="bg-thumb-btn" data-type="image" data-src="gambar/bg-fotostrip6.jpg" style="background-image: url('gambar/bg-fotostrip6.jpg');">BG 6</div>
+        </div>
+
+        <span style="font-size: 12px; font-weight: bold; color: #6b5344; text-align: center; margin-top: 6px;">Atau Warna Solid:</span>
+        <div class="bg-grid">
+          <div class="color-btn" data-type="color" data-color="#f5ebd9" style="background: #f5ebd9;"></div>
+          <div class="color-btn" data-type="color" data-color="#ffffff" style="background: #ffffff;"></div>
+          <div class="color-btn" data-type="color" data-color="#1e1e24" style="background: #1e1e24;"></div>
+          <div class="color-btn" data-type="color" data-color="#ffccd5" style="background: #ffccd5;"></div>
+          <div class="color-btn" data-type="color" data-color="#bde0fe" style="background: #bde0fe;"></div>
         </div>
       </div>
 
       <div style="width: 100%; border-top: 1px solid #f0e6d2; padding-top: 10px;">
-        <span style="font-size: 12px; font-weight: bold; color: #6b5344; display:block; margin-bottom:6px;">Tambah Aset Stiker:</span>
+        <span style="font-size: 12px; font-weight: bold; color: #6b5344; display:block; margin-bottom:6px; text-align:center;">Tambah Aset Stiker:</span>
         <div class="sticker-options">
-          <div class="sticker-choice" onclick="addSticker('https://api.iconify.design/fluent-emoji:red-heart.svg')"><img src="https://api.iconify.design/fluent-emoji:red-heart.svg"></div>
-          <div class="sticker-choice" onclick="addSticker('https://api.iconify.design/fluent-emoji:sparkles.svg')"><img src="https://api.iconify.design/fluent-emoji:sparkles.svg"></div>
-          <div class="sticker-choice" onclick="addSticker('https://api.iconify.design/fluent-emoji:star.svg')"><img src="https://api.iconify.design/fluent-emoji:star.svg"></div>
-          <div class="sticker-choice" onclick="addSticker('https://api.iconify.design/fluent-emoji:ribbon.svg')"><img src="https://api.iconify.design/fluent-emoji:ribbon.svg"></div>
-          <div class="sticker-choice" onclick="addSticker('https://api.iconify.design/fluent-emoji:cherry-blossom.svg')"><img src="https://api.iconify.design/fluent-emoji:cherry-blossom.svg"></div>
+          <div class="sticker-choice" onclick="createAndSendSticker('https://api.iconify.design/fluent-emoji:red-heart.svg')"><img src="https://api.iconify.design/fluent-emoji:red-heart.svg"></div>
+          <div class="sticker-choice" onclick="createAndSendSticker('https://api.iconify.design/fluent-emoji:sparkles.svg')"><img src="https://api.iconify.design/fluent-emoji:sparkles.svg"></div>
+          <div class="sticker-choice" onclick="createAndSendSticker('https://api.iconify.design/fluent-emoji:star.svg')"><img src="https://api.iconify.design/fluent-emoji:star.svg"></div>
+          <div class="sticker-choice" onclick="createAndSendSticker('https://api.iconify.design/fluent-emoji:ribbon.svg')"><img src="https://api.iconify.design/fluent-emoji:ribbon.svg"></div>
+          <div class="sticker-choice" onclick="createAndSendSticker('https://api.iconify.design/fluent-emoji:cherry-blossom.svg')"><img src="https://api.iconify.design/fluent-emoji:cherry-blossom.svg"></div>
         </div>
       </div>
     </div>
@@ -376,11 +403,11 @@
     let isConnected = false;
     let isHost = true; 
     
-    // Konfigurasi Background Default Gambar
-    let bgType = "image"; // 'image' atau 'color'
+    let bgType = "image"; 
     let currentBgColor = "#f5ebd9";
+    let currentBgSrc = "gambar/bg-fotostrip.jpg";
     const bgImage = new Image();
-    bgImage.src = 'gambar/bg-fotostrip.jpg'; // Path gambar latar belakang
+    bgImage.src = currentBgSrc;
 
     let capturedPhotoFrames = []; 
     let activeStickers = [];
@@ -426,7 +453,6 @@
       
       isHost = false;
       updateRoleLabels();
-
       rightVideo.srcObject = localStream;
 
       const call = peer.call(targetCode, localStream);
@@ -455,15 +481,31 @@
       joinCodeInput.disabled = true;
     }
 
+    function sendSyncData(type, payload) {
+      if (dataConnection && isConnected) {
+        dataConnection.send({ type, payload });
+      }
+    }
+
     function setupDataListener() {
       dataConnection.on('data', (data) => {
-        if (data.type === 'START_COUNTDOWN') { triggerPhotoSequence(); }
+        if (data.type === 'START_COUNTDOWN') { 
+          triggerPhotoSequence(); 
+        } else if (data.type === 'CHANGE_BG') {
+          applyBgChange(data.payload.bgType, data.payload.val, false);
+        } else if (data.type === 'ADD_STICKER') {
+          addStickerToDOM(data.payload, false);
+        } else if (data.type === 'UPDATE_STICKER') {
+          applyStickerUpdate(data.payload);
+        } else if (data.type === 'DELETE_STICKER') {
+          applyStickerDelete(data.payload.id);
+        }
       });
     }
 
     startBtn.addEventListener('click', () => {
       if (!isConnected) return;
-      if (dataConnection) { dataConnection.send({ type: 'START_COUNTDOWN' }); }
+      sendSyncData('START_COUNTDOWN', {});
       triggerPhotoSequence();
     });
 
@@ -521,12 +563,10 @@
       lCtx.filter = "sepia(0.2) contrast(1.05) brightness(0.95)";
       rCtx.filter = "sepia(0.2) contrast(1.05) brightness(0.95)";
 
-      lCtx.translate(540, 0);
-      lCtx.scale(-1, 1);
+      lCtx.translate(540, 0); lCtx.scale(-1, 1);
       drawCroppedVideo(lCtx, leftVideo, 540, 540);
 
-      rCtx.translate(540, 0);
-      rCtx.scale(-1, 1);
+      rCtx.translate(540, 0); rCtx.scale(-1, 1);
       drawCroppedVideo(rCtx, rightVideo, 540, 540);
 
       capturedPhotoFrames.push({ left: leftCanvas, right: rightCanvas });
@@ -547,7 +587,6 @@
       targetCtx.drawImage(videoElem, sX, sY, sW, sH, 0, 0, tW, tH);
     }
 
-    // Render Strip Utama (Dengan Opsi Gambar BG Default)
     function renderFinalStrip() {
       canvas.width = 800;  
       canvas.height = 1920; 
@@ -587,36 +626,57 @@
       ctx.fillText(dateStr, canvas.width / 2, bottomStartY + 45);
     }
 
-    // Switch Background (Gambar vs Warna)
-    document.querySelectorAll('.color-options div').forEach(btn => {
+    // Switch BG dengan Sinkronisasi Real-time
+    document.querySelectorAll('.bg-thumb-btn, .color-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.color-options div').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
         const type = btn.getAttribute('data-type');
-        if (type === 'image') {
-          bgType = 'image';
-        } else {
-          bgType = 'color';
-          currentBgColor = btn.getAttribute('data-color');
-        }
-
-        if (capturedPhotoFrames.length > 0) { renderFinalStrip(); }
+        const val = (type === 'image') ? btn.getAttribute('data-src') : btn.getAttribute('data-color');
+        applyBgChange(type, val, true);
       });
     });
 
-    // --- MANAJEMEN STIKER ---
-    function addSticker(imgUrl) {
+    function applyBgChange(type, val, isBroadcasting = true) {
+      document.querySelectorAll('.bg-thumb-btn, .color-btn').forEach(b => b.classList.remove('active'));
+
+      if (type === 'image') {
+        bgType = 'image';
+        currentBgSrc = val;
+        bgImage.src = currentBgSrc;
+        const targetBtn = document.querySelector(`.bg-thumb-btn[data-src="${val}"]`);
+        if (targetBtn) targetBtn.classList.add('active');
+        bgImage.onload = () => { if (capturedPhotoFrames.length > 0) renderFinalStrip(); };
+      } else {
+        bgType = 'color';
+        currentBgColor = val;
+        const targetBtn = document.querySelector(`.color-btn[data-color="${val}"]`);
+        if (targetBtn) targetBtn.classList.add('active');
+        if (capturedPhotoFrames.length > 0) renderFinalStrip();
+      }
+
+      if (isBroadcasting) {
+        sendSyncData('CHANGE_BG', { bgType: type, val: val });
+      }
+    }
+
+    // --- MANAJEMEN STIKER REAL-TIME ---
+    function createAndSendSticker(imgUrl) {
+      const stickerData = {
+        id: 'stk_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+        url: imgUrl,
+        x: 70, y: 70, size: 55, rotation: 0
+      };
+      addStickerToDOM(stickerData, true);
+    }
+
+    function addStickerToDOM(data, isBroadcasting = true) {
       const stickerEl = document.createElement('div');
       stickerEl.className = 'draggable-sticker selected';
-      
+      stickerEl.id = data.id;
+
       document.querySelectorAll('.draggable-sticker').forEach(el => el.classList.remove('selected'));
 
-      stickerEl.style.left = '70px';
-      stickerEl.style.top = '70px';
-
       const img = document.createElement('img');
-      img.src = imgUrl;
+      img.src = data.url;
       stickerEl.appendChild(img);
 
       const controls = document.createElement('div');
@@ -630,33 +690,31 @@
       stickerEl.appendChild(controls);
 
       stickerLayer.appendChild(stickerEl);
+      activeStickers.push(data);
+      updateStickerTransform(data);
 
-      const stickerData = { 
-        url: imgUrl, 
-        element: stickerEl, 
-        x: 70, 
-        y: 70, 
-        size: 55, 
-        rotation: 0 
-      };
-      activeStickers.push(stickerData);
+      if (isBroadcasting) {
+        sendSyncData('ADD_STICKER', data);
+      }
 
       controls.addEventListener('pointerdown', (e) => e.stopPropagation());
       controls.addEventListener('click', (e) => {
         e.stopPropagation();
         const action = e.target.getAttribute('data-action');
         if (action === 'rotate') {
-          stickerData.rotation = (stickerData.rotation + 45) % 360;
+          data.rotation = (data.rotation + 45) % 360;
         } else if (action === 'plus') {
-          stickerData.size = Math.min(180, stickerData.size * 1.2);
+          data.size = Math.min(180, data.size * 1.2);
         } else if (action === 'minus') {
-          stickerData.size = Math.max(25, stickerData.size * 0.8);
+          data.size = Math.max(25, data.size * 0.8);
         } else if (action === 'delete') {
-          activeStickers = activeStickers.filter(s => s !== stickerData);
+          activeStickers = activeStickers.filter(s => s.id !== data.id);
           stickerEl.remove();
+          sendSyncData('DELETE_STICKER', { id: data.id });
           return;
         }
-        updateStickerTransform(stickerData);
+        updateStickerTransform(data);
+        sendSyncData('UPDATE_STICKER', data);
       });
 
       stickerEl.addEventListener('pointerdown', (e) => {
@@ -664,13 +722,14 @@
         document.querySelectorAll('.draggable-sticker').forEach(el => el.classList.remove('selected'));
         stickerEl.classList.add('selected');
 
-        let startX = e.clientX - stickerData.x;
-        let startY = e.clientY - stickerData.y;
+        let startX = e.clientX - data.x;
+        let startY = e.clientY - data.y;
 
         function onPointerMove(ev) {
-          stickerData.x = ev.clientX - startX;
-          stickerData.y = ev.clientY - startY;
-          updateStickerTransform(stickerData);
+          data.x = ev.clientX - startX;
+          data.y = ev.clientY - startY;
+          updateStickerTransform(data);
+          sendSyncData('UPDATE_STICKER', data);
         }
 
         function onPointerUp() {
@@ -683,12 +742,29 @@
       });
     }
 
+    function applyStickerUpdate(data) {
+      const idx = activeStickers.findIndex(s => s.id === data.id);
+      if (idx !== -1) {
+        activeStickers[idx] = data;
+        updateStickerTransform(data);
+      }
+    }
+
+    function applyStickerDelete(id) {
+      activeStickers = activeStickers.filter(s => s.id !== id);
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
     function updateStickerTransform(data) {
-      data.element.style.left = data.x + 'px';
-      data.element.style.top = data.y + 'px';
-      data.element.style.width = data.size + 'px';
-      data.element.style.height = data.size + 'px';
-      data.element.style.transform = `rotate(${data.rotation}deg)`;
+      const el = document.getElementById(data.id);
+      if (el) {
+        el.style.left = data.x + 'px';
+        el.style.top = data.y + 'px';
+        el.style.width = data.size + 'px';
+        el.style.height = data.size + 'px';
+        el.style.transform = `rotate(${data.rotation}deg)`;
+      }
     }
 
     async function renderStickersToCanvas(targetCtx, targetCanvas) {
@@ -696,7 +772,9 @@
       const scaleFactor = targetCanvas.width / displayRect.width;
 
       for (let st of activeStickers) {
-        const rect = st.element.getBoundingClientRect();
+        const el = document.getElementById(st.id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
         const drawX = (rect.left - displayRect.left) * scaleFactor;
         const drawY = (rect.top - displayRect.top) * scaleFactor;
         const drawSize = rect.width * scaleFactor;
