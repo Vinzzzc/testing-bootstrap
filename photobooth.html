@@ -78,27 +78,26 @@
     button:hover:not(:disabled) { background-color: #523e31; }
     button:disabled { background-color: #ccc; cursor: not-allowed; }
 
-    /* Tampilan Split Screen Live Kamera */
+    /* Tampilan Split Screen Live Kamera (Dibuat Sangat Rapat) */
     .viewfinders {
       position: relative;
       display: flex;
-      gap: 10px;
+      gap: 0px; /* Benar-benar rapat tanpa jarak */
       width: 100%;
       max-width: 650px;
       background: #ffffff;
-      padding: 15px;
+      padding: 10px;
       border-radius: 16px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
       border: 1px solid #e8dec8;
+      overflow: hidden;
     }
 
     .video-container {
       flex: 1;
       position: relative;
       background: #222;
-      border-radius: 8px;
-      overflow: hidden;
-      aspect-ratio: 1/1; /* Rasio Persegi Presisi */
+      aspect-ratio: 1/1; 
     }
 
     .video-container span.label {
@@ -117,7 +116,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: sepia(0.2) contrast(1.05) brightness(0.95); /* Filter Warm Vintage Sesuai Gambar */
+      filter: sepia(0.2) contrast(1.05) brightness(0.95);
     }
 
     #localVideo { transform: scaleX(-1); }
@@ -141,19 +140,49 @@
       flex-direction: column;
       align-items: center;
       gap: 15px;
+      width: 100%;
+      max-width: 650px;
     }
+
+    /* Panel Pilihan Warna Setelah Foto Jadi */
+    .color-picker-box {
+      background: #fff;
+      padding: 15px;
+      border-radius: 12px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border: 1px solid #e8dec8;
+    }
+
+    .color-options {
+      display: flex;
+      gap: 12px;
+    }
+
+    .color-btn {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      border: 2px solid #ccc;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .color-btn.active { border-color: #5a4638; transform: scale(1.15); }
 
     /* Tampilan Preview Photo Strip di Layar */
     #stripCanvas {
-      width: 240px;
+      width: 260px;
       height: auto;
-      border-radius: 8px;
+      border-radius: 6px;
       box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-      margin-top: 15px;
       display: none;
     }
 
-    #downloadBtn { background-color: #8c7a6b; display: none; }
+    #downloadBtn { background-color: #8c7a6b; display: none; width: 100%; padding: 14px; font-size: 16px; }
     #downloadBtn:hover { background-color: #6b5344; }
   </style>
 </head>
@@ -174,17 +203,15 @@
     </div>
   </div>
 
-  <!-- Area Dual Viewfinder Split Kiri-Kanan -->
+  <!-- Area Dual Viewfinder Split Kiri-Kanan (Rapat Tanpa Gap) -->
   <div class="viewfinders">
     <div id="countdown">3</div>
 
-    <!-- Kamera Kamu -->
     <div class="video-container">
       <span class="label">Kamu (Kiri)</span>
       <video id="localVideo" autoplay playsinline muted></video>
     </div>
 
-    <!-- Kamera Teman -->
     <div class="video-container">
       <span class="label" id="remoteLabel">Menunggu Teman...</span>
       <video id="remoteVideo" autoplay playsinline></video>
@@ -192,10 +219,23 @@
   </div>
 
   <div class="action-panel">
-    <button id="startBtn" class="primary-btn" disabled style="padding: 15px 40px; font-size: 16px;">Mulai Foto (4x)</button>
+    <button id="startBtn" class="primary-btn" disabled style="padding: 15px 40px; font-size: 16px; width:100%;">Mulai Foto (4x)</button>
     
+    <!-- Pilihan Warna Bingkai (Muncul setelah foto jadi) -->
+    <div id="colorPickerBox" class="color-picker-box">
+      <span style="font-size: 13px; font-weight: bold; color: #6b5344;">Pilih Warna Bingkai:</span>
+      <div class="color-options">
+        <div class="color-btn active" style="background: #f5ebd9;" data-color="#f5ebd9" title="Krem Klasik"></div>
+        <div class="color-btn" style="background: #ffffff;" data-color="#ffffff" title="Putih Bersih"></div>
+        <div class="color-btn" style="background: #1e1e24;" data-color="#1e1e24" title="Hitam Elegan"></div>
+        <div class="color-btn" style="background: #ffccd5;" data-color="#ffccd5" title="Soft Pink"></div>
+        <div class="color-btn" style="background: #bde0fe;" data-color="#bde0fe" title="Soft Blue"></div>
+        <div class="color-btn" style="background: #c8d6e5;" data-color="#c8d6e5" title="Grey Pastel"></div>
+      </div>
+    </div>
+
     <canvas id="stripCanvas"></canvas>
-    <a id="downloadLink" download="our_photobooth.png">
+    <a id="downloadLink" download="our_photobooth.png" style="width: 100%;">
       <button id="downloadBtn">Download Photo Strip HD</button>
     </a>
   </div>
@@ -213,13 +253,18 @@
     const ctx = canvas.getContext('2d');
     const downloadBtn = document.getElementById('downloadBtn');
     const downloadLink = document.getElementById('downloadLink');
+    const colorPickerBox = document.getElementById('colorPickerBox');
+    const colorBtns = document.querySelectorAll('.color-btn');
 
     let peer = null;
     let dataConnection = null;
     let localStream = null;
     let isConnected = false;
+    let currentBgColor = "#f5ebd9"; // Default warna krem
 
-    // Kode Acak 6 Digit
+    // Menyimpan memori hasil tangkapan foto mentah agar bisa di-re-color instant
+    let capturedPhotoFrames = []; 
+
     const myCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     async function initCamera() {
@@ -237,11 +282,7 @@
 
     function initPeer() {
       peer = new Peer(myCode);
-
-      peer.on('open', (id) => {
-        myCodeDisplay.innerText = id;
-      });
-
+      peer.on('open', (id) => { myCodeDisplay.innerText = id; });
       peer.on('call', (call) => {
         call.answer(localStream);
         call.on('stream', (remoteStream) => {
@@ -249,7 +290,6 @@
           setConnectedState();
         });
       });
-
       peer.on('connection', (conn) => {
         dataConnection = conn;
         setupDataListener();
@@ -262,13 +302,11 @@
         alert("Masukkan 6 digit kode room!");
         return;
       }
-
       const call = peer.call(targetCode, localStream);
       call.on('stream', (remoteStream) => {
         remoteVideo.srcObject = remoteStream;
         setConnectedState();
       });
-
       dataConnection = peer.connect(targetCode);
       setupDataListener();
     });
@@ -302,18 +340,21 @@
       startBtn.disabled = true;
       canvas.style.display = 'none';
       downloadBtn.style.display = 'none';
+      colorPickerBox.style.display = 'none';
+      capturedPhotoFrames = [];
 
-      drawBlankHDCanvas();
-
-      // Mengambil 4 Foto Sesuai Referensi Gambar (4 Baris Bertumpuk)
+      // Mengambil 4 Foto Berturut-turut
       for (let i = 0; i < 4; i++) {
         await runCountdown(3);
-        captureDualPhoto(i);
+        captureDualPhotoData();
       }
+
+      // Render pertama kali ke canvas
+      renderFinalStrip();
 
       startBtn.disabled = false;
       canvas.style.display = 'block';
-      downloadLink.href = canvas.toDataURL('image/png', 1.0);
+      colorPickerBox.style.display = 'flex';
       downloadBtn.style.display = 'block';
     }
 
@@ -336,83 +377,95 @@
       });
     }
 
-    // Menggambar Bingkai Sesuai Gaya Referensi Gambar
-    function drawBlankHDCanvas() {
-      canvas.width = 1200;  // Resolusi Tinggi HD
-      canvas.height = 3100;
+    // Ambil data gambar mentah dari video kiri & kanan secara rapat
+    function captureDualPhotoData() {
+      const leftCanvas = document.createElement('canvas');
+      const rightCanvas = document.createElement('canvas');
+      leftCanvas.width = 540; leftCanvas.height = 540;
+      rightCanvas.width = 540; rightCanvas.height = 540;
 
-      // Warna Bingkai Krem Pastel
-      ctx.fillStyle = "#f5ebd9"; 
+      const lCtx = leftCanvas.getContext('2d');
+      const rCtx = rightCanvas.getContext('2d');
+
+      // Set Filter Vintage Sepia
+      lCtx.filter = "sepia(0.2) contrast(1.05) brightness(0.95)";
+      rCtx.filter = "sepia(0.2) contrast(1.05) brightness(0.95)";
+
+      // Crop & Simpan Kamera Kiri (Mirror)
+      lCtx.translate(540, 0);
+      lCtx.scale(-1, 1);
+      drawCroppedVideo(lCtx, localVideo, 540, 540);
+
+      // Crop & Simpan Kamera Kanan
+      drawCroppedVideo(rCtx, remoteVideo, 540, 540);
+
+      capturedPhotoFrames.push({ left: leftCanvas, right: rightCanvas });
+    }
+
+    function drawCroppedVideo(targetCtx, videoElem, tW, tH) {
+      const vW = videoElem.videoWidth || 640;
+      const vH = videoElem.videoHeight || 480;
+      const targetRatio = tW / tH;
+      const videoRatio = vW / vH;
+      let sW, sH, sX, sY;
+
+      if (videoRatio > targetRatio) {
+        sH = vH; sW = vH * targetRatio; sX = (vW - sW) / 2; sY = 0;
+      } else {
+        sW = vW; sH = vW / targetRatio; sX = 0; sY = (vH - sH) / 2;
+      }
+      targetCtx.drawImage(videoElem, sX, sY, sW, sH, 0, 0, tW, tH);
+    }
+
+    // Fungsi Render Ulang Strip (Dipakai saat ganti warna bingkai)
+    function renderFinalStrip() {
+      canvas.width = 1120;  // Lebar presisi agar pas tanpa gap berlebih
+      canvas.height = 2750;
+
+      // Warna Bingkai Sesuai Pilihan
+      ctx.fillStyle = currentBgColor; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Tanggal Otomatis di Bawah Strip (Format: YYYY.MM.DD)
+      const padding = 50; // Margin luar bingkai tipis
+      const photoW = 510;  // Lebar tiap kotak foto
+      const photoH = 510;  // Tinggi kotak foto (persegi 1:1)
+      const gapY = 12;     // Jarak vertikal antar baris foto yang sangat rapat
+
+      capturedPhotoFrames.forEach((frame, index) => {
+        const currentY = padding + index * (photoH + gapY);
+
+        // Kiri & Kanan saling menempel rapat tanpa gap horizontal (gap = 0)
+        ctx.drawImage(frame.left, padding, currentY, photoW, photoH);
+        ctx.drawImage(frame.right, padding + photoW, currentY, photoW, photoH);
+      });
+
+      // Tanggal Otomatis di Bawah Strip
       const now = new Date();
       const dateStr = now.getFullYear() + '.' + 
                       String(now.getMonth() + 1).padStart(2, '0') + '.' + 
                       String(now.getDate()).padStart(2, '0');
 
-      ctx.fillStyle = "#6b5344";
-      ctx.font = "bold 55px Arial";
+      // Menyesuaikan warna teks tanggal otomatis agar kontras dengan warna bingkai
+      ctx.fillStyle = (currentBgColor === "#1e1e24") ? "#ffffff" : "#6b5344";
+      ctx.font = "bold 45px Arial";
       ctx.textAlign = "center";
-      ctx.fillText(dateStr, canvas.width / 2, canvas.height - 100);
+      ctx.fillText(dateStr, canvas.width / 2, canvas.height - 70);
+
+      downloadLink.href = canvas.toDataURL('image/png', 1.0);
     }
 
-    function captureDualPhoto(slotIndex) {
-      const margin = 80;
-      const gap = 15; // Berdempetan dekat sesuai gambar
-      const startY = 100;
-      const rowHeight = 520;
-
-      const singleW = (canvas.width - (margin * 2) - gap) / 2; // 512px
-      const singleH = rowHeight; // Square 1:1
-      const currentY = startY + slotIndex * (rowHeight + 35);
-
-      // Gambar Kamera Kiri
-      drawVideoToCanvas(localVideo, margin, currentY, singleW, singleH, true);
-
-      // Gambar Kamera Kanan
-      drawVideoToCanvas(remoteVideo, margin + singleW + gap, currentY, singleW, singleH, false);
-    }
-
-    function drawVideoToCanvas(videoElem, targetX, targetY, targetW, targetH, isMirror) {
-      const vW = videoElem.videoWidth || 640;
-      const vH = videoElem.videoHeight || 480;
-
-      // Crop Center Persegi (1:1)
-      const targetRatio = targetW / targetH;
-      const videoRatio = vW / vH;
-
-      let sW, sH, sX, sY;
-      if (videoRatio > targetRatio) {
-        sH = vH;
-        sW = vH * targetRatio;
-        sX = (vW - sW) / 2;
-        sY = 0;
-      } else {
-        sW = vW;
-        sH = vW / targetRatio;
-        sX = 0;
-        sY = (vH - sH) / 2;
-      }
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(targetX, targetY, targetW, targetH);
-      ctx.clip();
-
-      // Tambahkan Filter Vintage Sepia pada Canvas
-      ctx.filter = "sepia(0.25) contrast(1.05) brightness(0.95)";
-
-      if (isMirror) {
-        ctx.translate(targetX + targetW, targetY);
-        ctx.scale(-1, 1);
-        ctx.drawImage(videoElem, sX, sY, sW, sH, 0, 0, targetW, targetH);
-      } else {
-        ctx.drawImage(videoElem, sX, sY, sW, sH, targetX, targetY, targetW, targetH);
-      }
-
-      ctx.restore();
-    }
+    // Event Listener untuk Pilihan Warna Bingkai
+    colorBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        colorBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentBgColor = btn.getAttribute('data-color');
+        
+        if (capturedPhotoFrames.length > 0) {
+          renderFinalStrip(); // Update warna strip secara instan
+        }
+      });
+    });
 
     initCamera();
   </script>
