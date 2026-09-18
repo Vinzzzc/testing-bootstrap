@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dual Camera Online Photo Booth</title>
+  <!-- PeerJS Library untuk Koneksi Video Real-Time -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: #121214;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 { color: #ff4757; margin-bottom: 5px; font-size: 24px; }
+    p.subtitle { color: #aaa; margin-top: 0; margin-bottom: 20px; font-size: 14px; }
+
+    /* Area Room & Connection */
+    .room-card {
+      background: #1e1e24;
+      padding: 15px 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 650px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #333;
+    }
+
+    .code-box {
+      font-size: 18px;
+      font-weight: bold;
+      background: #2b2b36;
+      padding: 8px 15px;
+      border-radius: 8px;
+      letter-spacing: 2px;
+      color: #2ed573;
+    }
+
+    .join-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #2b2b36;
+      color: #fff;
+      font-size: 14px;
+      text-transform: uppercase;
+      width: 130px;
+      text-align: center;
+    }
+
+    button {
+      background-color: #ff4757;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover:not(:disabled) { background-color: #e84118; }
+    button:disabled { background-color: #444; cursor: not-allowed; }
+
+    /* Preview Kamera Split Screen (Kiri - Kanan) */
+    .viewfinders {
+      position: relative;
+      display: flex;
+      gap: 15px;
+      width: 100%;
+      max-width: 650px;
+      background: #000;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+
+    .video-container {
+      flex: 1;
+      position: relative;
+      background: #111;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+      border: 2px solid #333;
+    }
+
+    .video-container span.label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.6);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 2;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #localVideo { transform: scaleX(-1); } /* Mirror kamera sendiri */
+
+    #countdown {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 100px;
+      color: #fff;
+      font-weight: bold;
+      text-shadow: 0 0 20px rgba(0,0,0,0.9);
+      display: none;
+      z-index: 10;
+    }
+
+    .action-panel {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    /* Output Canvas Foto HD */
+    #stripCanvas {
+      width: 320px;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      margin-top: 15px;
+      display: none;
+    }
+
+    #downloadBtn { background-color: #2ed573; display: none; }
+    #downloadBtn:hover { background-color: #26af5f; }
+  </style>
+</head>
+<body>
+
+  <h1>📷 Dual Photo Booth Online</h1>
+  <p class="subtitle">Foto bareng teman dari 2 lokasi berbeda secara real-time</p>
+
+  <!-- Panel Koneksi Room -->
+  <div class="room-card">
+    <div>
+      <div style="font-size: 12px; color: #aaa; margin-bottom: 4px;">Kode Room Kamu (Kirim ke Teman):</div>
+      <div id="myCodeDisplay" class="code-box">MENGHUBUNGKAN...</div>
+    </div>
+    <div class="join-group">
+      <input type="text" id="joinCodeInput" placeholder="KODE TEMAN" maxlength="6">
+      <button id="joinBtn">Sambungkan</button>
+    </div>
+  </div>
+
+  <!-- Area Live Preview Split (Kiri & Kanan) -->
+  <div class="viewfinders">
+    <div id="countdown">3</div>
+
+    <!-- Kamera Kiri (Kamu) -->
+    <div class="video-container">
+      <span class="label">Kamera Kamu (Kiri)</span>
+      <video id="localVideo" autoplay playsinline muted></video>
+    </div>
+
+    <!-- Kamera Kanan (Teman) -->
+    <div class="video-container">
+      <span class="label" id="remoteLabel">Menunggu Teman...</span>
+      <video id="remoteVideo" autoplay playsinline></video>
+    </div>
+  </div>
+
+  <!-- Tombol Ekstrak/Foto -->
+  <div class="action-panel">
+    <button id="startBtn" class="primary-btn" disabled style="padding: 15px 40px; font-size: 18px;">Mulai Foto Bareng (3x)</button>
+    
+    <!-- Canvas & Download -->
+    <canvas id="stripCanvas"></canvas>
+    <a id="downloadLink" download="dual_photobooth.png">
+      <button id="downloadBtn">Download Foto HD</button>
+    </a>
+  </div>
+
+  <script>
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const myCodeDisplay = document.getElementById('myCodeDisplay');
+    const joinCodeInput = document.getElementById('joinCodeInput');
+    const joinBtn = document.getElementById('joinBtn');
+    const startBtn = document.getElementById('startBtn');
+    const remoteLabel = document.getElementById('remoteLabel');
+    const countdownEl = document.getElementById('countdown');
+    const canvas = document.getElementById('stripCanvas');
+    const ctx = canvas.getContext('2d');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const downloadLink = document.getElementById('downloadLink');
+
+    let peer = null;
+    let dataConnection = null;
+    let localStream = null;
+    let isConnected = false;
+
+    // 1. Generate Kode Unik 6 Angka
+    const myCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // 2. Akses Kamera HP / Laptop
+    async function initCamera() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { width: { ideal: 1280 }, height: { ideal: 960 }, facingMode: "user" }, 
+          audio: false 
+        });
+        localVideo.srcObject = localStream;
+        initPeer();
+      } catch (err) {
+        alert("Gagal mengaktifkan kamera: " + err.message);
+      }
+    }
+
+    // 3. Inisialisasi Server PeerJS (Cloud Gratis)
+    function initPeer() {
+      peer = new Peer(myCode);
+
+      peer.on('open', (id) => {
+        myCodeDisplay.innerText = id;
+      });
+
+      // Menerima Panggilan Video dari Orang Kedua (Guest)
+      peer.on('call', (call) => {
+        call.answer(localStream); // Kirim stream kamera lokal balik ke lawan
+        call.on('stream', (remoteStream) => {
+          remoteVideo.srcObject = remoteStream;
+          setConnectedState();
+        });
+      });
+
+      // Menerima Koneksi Data (Untuk Sync Tombol Foto)
+      peer.on('connection', (conn) => {
+        dataConnection = conn;
+        setupDataListener();
+      });
+    }
+
+    // 4. Orang Kedua Memasukkan Kode untuk Connect
+    joinBtn.addEventListener('click', () => {
+      const targetCode = joinCodeInput.value.trim();
+      if (!targetCode || targetCode.length !== 6) {
+        alert("Masukkan 6 digit kode room temanmu!");
+        return;
+      }
+
+      // Panggil Video Teman
+      const call = peer.call(targetCode, localStream);
+      call.on('stream', (remoteStream) => {
+        remoteVideo.srcObject = remoteStream;
+        setConnectedState();
+      });
+
+      // Buka Jalur Data Perintah
+      dataConnection = peer.connect(targetCode);
+      setupDataListener();
+    });
+
+    function setConnectedState() {
+      isConnected = true;
+      remoteLabel.innerText = "Kamera Teman (Kanan)";
+      remoteLabel.style.background = "#2ed573";
+      startBtn.disabled = false;
+      joinBtn.disabled = true;
+      joinCodeInput.disabled = true;
+    }
+
+    // 5. Listener Komunikasi Data Real-time (Sync Tombol & Jepret)
+    function setupDataListener() {
+      dataConnection.on('data', (data) => {
+        if (data.type === 'START_COUNTDOWN') {
+          triggerPhotoSequence();
+        }
+      });
+    }
+
+    // 6. Logika Tombol Mulai Foto
+    startBtn.addEventListener('click', () => {
+      if (!isConnected) return;
+      // Kirim sinyal ke HP teman agar countdown berjalan bareng
+      if (dataConnection) {
+        dataConnection.send({ type: 'START_COUNTDOWN' });
+      }
+      triggerPhotoSequence();
+    });
+
+    async function triggerPhotoSequence() {
+      startBtn.disabled = true;
+      canvas.style.display = 'none';
+      downloadBtn.style.display = 'none';
+
+      drawBlankHDCanvas();
+
+      // Ambil 3 foto berturut-turut
+      for (let i = 0; i < 3; i++) {
+        await runCountdown(3);
+        captureDualPhoto(i);
+      }
+
+      startBtn.disabled = false;
+      canvas.style.display = 'block';
+      downloadLink.href = canvas.toDataURL('image/png', 1.0);
+      downloadBtn.style.display = 'block';
+    }
+
+    function runCountdown(seconds) {
+      return new Promise((resolve) => {
+        countdownEl.style.display = 'block';
+        let count = seconds;
+        countdownEl.innerText = count;
+
+        const timer = setInterval(() => {
+          count--;
+          if (count > 0) {
+            countdownEl.innerText = count;
+          } else {
+            clearInterval(timer);
+            countdownEl.style.display = 'none';
+            resolve();
+          }
+        }, 1000);
+      });
+    }
+
+    // 7. Render Foto Kiri & Kanan ke Canvas HD (Anti Pecah & Anti Gepeng)
+    function drawBlankHDCanvas() {
+      canvas.width = 1600;  // Lebar HD
+      canvas.height = 2400; // Tinggi HD
+
+      ctx.fillStyle = "#1e1e24"; // Background Frame
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Watermark
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 45px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("DUAL PHOTOBOOTH ONLINE", canvas.width / 2, canvas.height - 60);
+    }
+
+    function captureDualPhoto(slotIndex) {
+      const margin = 60;
+      const gap = 40;
+      const startY = 80;
+      const rowHeight = 680;
+
+      const singleW = (canvas.width - (margin * 2) - gap) / 2; // Kiri & Kanan 670px
+      const singleH = 680;
+      const currentY = startY + slotIndex * (rowHeight + 40);
+
+      // --- 1. GAMBAR KAMERA KIRI (LOKAL) ---
+      drawVideoToCanvas(localVideo, margin, currentY, singleW, singleH, true);
+
+      // --- 2. GAMBAR KAMERA KANAN (REMOTE TEMAN) ---
+      drawVideoToCanvas(remoteVideo, margin + singleW + gap, currentY, singleW, singleH, false);
+    }
+
+    function drawVideoToCanvas(videoElem, targetX, targetY, targetW, targetH, isMirror) {
+      const vW = videoElem.videoWidth || 640;
+      const vH = videoElem.videoHeight || 480;
+
+      // Crop Object-Fit Cover
+      const targetRatio = targetW / targetH;
+      const videoRatio = vW / vH;
+
+      let sW, sH, sX, sY;
+      if (videoRatio > targetRatio) {
+        sH = vH;
+        sW = vH * targetRatio;
+        sX = (vW - sW) / 2;
+        sY = 0;
+      } else {
+        sW = vW;
+        sH = vW / targetRatio;
+        sX = 0;
+        sY = (vH - sH) / 2;
+      }
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(targetX, targetY, targetW, targetH);
+      ctx.clip();
+
+      if (isMirror) {
+        ctx.translate(targetX + targetW, targetY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoElem, sX, sY, sW, sH, 0, 0, targetW, targetH);
+      } else {
+        ctx.drawImage(videoElem, sX, sY, sW, sH, targetX, targetY, targetW, targetH);
+      }
+
+      ctx.restore();
+    }
+
+    // Jalankan Awal
+    initCamera();
+  </script>
+</body>
+</html>
