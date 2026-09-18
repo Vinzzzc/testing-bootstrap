@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dual Camera Online Photo Booth</title>
-  <!-- PeerJS Library untuk Koneksi Video Real-Time -->
+  <title>GetAngie Style Online Photobooth</title>
+  <!-- PeerJS untuk koneksi 2 HP -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
     * { box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background-color: #121214;
-      color: #fff;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', sans-serif;
+      background-color: #f4efe6;
+      color: #4a3e3d;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -19,14 +19,14 @@
       margin: 0;
     }
 
-    h1 { color: #ff4757; margin-bottom: 5px; font-size: 24px; }
-    p.subtitle { color: #aaa; margin-top: 0; margin-bottom: 20px; font-size: 14px; }
+    h1 { color: #5a4638; margin-bottom: 2px; font-size: 26px; }
+    p.subtitle { color: #8c7a6b; margin-top: 0; margin-bottom: 20px; font-size: 14px; }
 
-    /* Area Room & Connection */
+    /* Panel Koneksi Room Kode */
     .room-card {
-      background: #1e1e24;
+      background: #ffffff;
       padding: 15px 20px;
-      border-radius: 12px;
+      border-radius: 16px;
       margin-bottom: 20px;
       width: 100%;
       max-width: 650px;
@@ -35,30 +35,28 @@
       gap: 15px;
       align-items: center;
       justify-content: space-between;
-      border: 1px solid #333;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      border: 1px solid #e8dec8;
     }
 
     .code-box {
       font-size: 18px;
       font-weight: bold;
-      background: #2b2b36;
+      background: #f0e6d2;
       padding: 8px 15px;
       border-radius: 8px;
       letter-spacing: 2px;
-      color: #2ed573;
+      color: #5a4638;
     }
 
-    .join-group {
-      display: flex;
-      gap: 8px;
-    }
+    .join-group { display: flex; gap: 8px; }
 
     input[type="text"] {
       padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #444;
-      background: #2b2b36;
-      color: #fff;
+      border-radius: 8px;
+      border: 1px solid #d0c2b0;
+      background: #faf7f2;
+      color: #333;
       font-size: 14px;
       text-transform: uppercase;
       width: 130px;
@@ -66,7 +64,7 @@
     }
 
     button {
-      background-color: #ff4757;
+      background-color: #6b5344;
       color: white;
       border: none;
       padding: 10px 18px;
@@ -77,41 +75,41 @@
       transition: 0.2s;
     }
 
-    button:hover:not(:disabled) { background-color: #e84118; }
-    button:disabled { background-color: #444; cursor: not-allowed; }
+    button:hover:not(:disabled) { background-color: #523e31; }
+    button:disabled { background-color: #ccc; cursor: not-allowed; }
 
-    /* Preview Kamera Split Screen (Kiri - Kanan) */
+    /* Tampilan Split Screen Live Kamera */
     .viewfinders {
       position: relative;
       display: flex;
-      gap: 15px;
+      gap: 10px;
       width: 100%;
       max-width: 650px;
-      background: #000;
+      background: #ffffff;
       padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      border: 1px solid #e8dec8;
     }
 
     .video-container {
       flex: 1;
       position: relative;
-      background: #111;
+      background: #222;
       border-radius: 8px;
       overflow: hidden;
-      aspect-ratio: 4/3;
-      border: 2px solid #333;
+      aspect-ratio: 1/1; /* Rasio Persegi Presisi */
     }
 
     .video-container span.label {
       position: absolute;
       top: 10px;
       left: 10px;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.5);
+      color: #fff;
       padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
+      border-radius: 6px;
+      font-size: 11px;
       z-index: 2;
     }
 
@@ -119,9 +117,10 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      filter: sepia(0.2) contrast(1.05) brightness(0.95); /* Filter Warm Vintage Sesuai Gambar */
     }
 
-    #localVideo { transform: scaleX(-1); } /* Mirror kamera sendiri */
+    #localVideo { transform: scaleX(-1); }
 
     #countdown {
       position: absolute;
@@ -131,7 +130,7 @@
       font-size: 100px;
       color: #fff;
       font-weight: bold;
-      text-shadow: 0 0 20px rgba(0,0,0,0.9);
+      text-shadow: 0 0 20px rgba(0,0,0,0.8);
       display: none;
       z-index: 10;
     }
@@ -144,30 +143,30 @@
       gap: 15px;
     }
 
-    /* Output Canvas Foto HD */
+    /* Tampilan Preview Photo Strip di Layar */
     #stripCanvas {
-      width: 320px;
+      width: 240px;
       height: auto;
       border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
       margin-top: 15px;
       display: none;
     }
 
-    #downloadBtn { background-color: #2ed573; display: none; }
-    #downloadBtn:hover { background-color: #26af5f; }
+    #downloadBtn { background-color: #8c7a6b; display: none; }
+    #downloadBtn:hover { background-color: #6b5344; }
   </style>
 </head>
 <body>
 
-  <h1>📷 Dual Photo Booth Online</h1>
-  <p class="subtitle">Foto bareng teman dari 2 lokasi berbeda secara real-time</p>
+  <h1>keke & DAVIN</h1>
+  <p class="subtitle">our photobooth • getangie.com style</p>
 
-  <!-- Panel Koneksi Room -->
+  <!-- Panel Kode Room -->
   <div class="room-card">
     <div>
-      <div style="font-size: 12px; color: #aaa; margin-bottom: 4px;">Kode Room Kamu (Kirim ke Teman):</div>
-      <div id="myCodeDisplay" class="code-box">MENGHUBUNGKAN...</div>
+      <div style="font-size: 12px; color: #8c7a6b; margin-bottom: 4px;">Kode Room Kamu:</div>
+      <div id="myCodeDisplay" class="code-box">CONNECTING...</div>
     </div>
     <div class="join-group">
       <input type="text" id="joinCodeInput" placeholder="KODE TEMAN" maxlength="6">
@@ -175,31 +174,29 @@
     </div>
   </div>
 
-  <!-- Area Live Preview Split (Kiri & Kanan) -->
+  <!-- Area Dual Viewfinder Split Kiri-Kanan -->
   <div class="viewfinders">
     <div id="countdown">3</div>
 
-    <!-- Kamera Kiri (Kamu) -->
+    <!-- Kamera Kamu -->
     <div class="video-container">
-      <span class="label">Kamera Kamu (Kiri)</span>
+      <span class="label">Kamu (Kiri)</span>
       <video id="localVideo" autoplay playsinline muted></video>
     </div>
 
-    <!-- Kamera Kanan (Teman) -->
+    <!-- Kamera Teman -->
     <div class="video-container">
       <span class="label" id="remoteLabel">Menunggu Teman...</span>
       <video id="remoteVideo" autoplay playsinline></video>
     </div>
   </div>
 
-  <!-- Tombol Ekstrak/Foto -->
   <div class="action-panel">
-    <button id="startBtn" class="primary-btn" disabled style="padding: 15px 40px; font-size: 18px;">Mulai Foto Bareng (3x)</button>
+    <button id="startBtn" class="primary-btn" disabled style="padding: 15px 40px; font-size: 16px;">Mulai Foto (4x)</button>
     
-    <!-- Canvas & Download -->
     <canvas id="stripCanvas"></canvas>
-    <a id="downloadLink" download="dual_photobooth.png">
-      <button id="downloadBtn">Download Foto HD</button>
+    <a id="downloadLink" download="our_photobooth.png">
+      <button id="downloadBtn">Download Photo Strip HD</button>
     </a>
   </div>
 
@@ -222,14 +219,13 @@
     let localStream = null;
     let isConnected = false;
 
-    // 1. Generate Kode Unik 6 Angka
+    // Kode Acak 6 Digit
     const myCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // 2. Akses Kamera HP / Laptop
     async function initCamera() {
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { width: { ideal: 1280 }, height: { ideal: 960 }, facingMode: "user" }, 
+          video: { width: { ideal: 1080 }, height: { ideal: 1080 }, facingMode: "user" }, 
           audio: false 
         });
         localVideo.srcObject = localStream;
@@ -239,7 +235,6 @@
       }
     }
 
-    // 3. Inisialisasi Server PeerJS (Cloud Gratis)
     function initPeer() {
       peer = new Peer(myCode);
 
@@ -247,52 +242,46 @@
         myCodeDisplay.innerText = id;
       });
 
-      // Menerima Panggilan Video dari Orang Kedua (Guest)
       peer.on('call', (call) => {
-        call.answer(localStream); // Kirim stream kamera lokal balik ke lawan
+        call.answer(localStream);
         call.on('stream', (remoteStream) => {
           remoteVideo.srcObject = remoteStream;
           setConnectedState();
         });
       });
 
-      // Menerima Koneksi Data (Untuk Sync Tombol Foto)
       peer.on('connection', (conn) => {
         dataConnection = conn;
         setupDataListener();
       });
     }
 
-    // 4. Orang Kedua Memasukkan Kode untuk Connect
     joinBtn.addEventListener('click', () => {
       const targetCode = joinCodeInput.value.trim();
       if (!targetCode || targetCode.length !== 6) {
-        alert("Masukkan 6 digit kode room temanmu!");
+        alert("Masukkan 6 digit kode room!");
         return;
       }
 
-      // Panggil Video Teman
       const call = peer.call(targetCode, localStream);
       call.on('stream', (remoteStream) => {
         remoteVideo.srcObject = remoteStream;
         setConnectedState();
       });
 
-      // Buka Jalur Data Perintah
       dataConnection = peer.connect(targetCode);
       setupDataListener();
     });
 
     function setConnectedState() {
       isConnected = true;
-      remoteLabel.innerText = "Kamera Teman (Kanan)";
-      remoteLabel.style.background = "#2ed573";
+      remoteLabel.innerText = "Teman (Kanan)";
+      remoteLabel.style.background = "#6b5344";
       startBtn.disabled = false;
       joinBtn.disabled = true;
       joinCodeInput.disabled = true;
     }
 
-    // 5. Listener Komunikasi Data Real-time (Sync Tombol & Jepret)
     function setupDataListener() {
       dataConnection.on('data', (data) => {
         if (data.type === 'START_COUNTDOWN') {
@@ -301,10 +290,8 @@
       });
     }
 
-    // 6. Logika Tombol Mulai Foto
     startBtn.addEventListener('click', () => {
       if (!isConnected) return;
-      // Kirim sinyal ke HP teman agar countdown berjalan bareng
       if (dataConnection) {
         dataConnection.send({ type: 'START_COUNTDOWN' });
       }
@@ -318,8 +305,8 @@
 
       drawBlankHDCanvas();
 
-      // Ambil 3 foto berturut-turut
-      for (let i = 0; i < 3; i++) {
+      // Mengambil 4 Foto Sesuai Referensi Gambar (4 Baris Bertumpuk)
+      for (let i = 0; i < 4; i++) {
         await runCountdown(3);
         captureDualPhoto(i);
       }
@@ -349,35 +336,41 @@
       });
     }
 
-    // 7. Render Foto Kiri & Kanan ke Canvas HD (Anti Pecah & Anti Gepeng)
+    // Menggambar Bingkai Sesuai Gaya Referensi Gambar
     function drawBlankHDCanvas() {
-      canvas.width = 1600;  // Lebar HD
-      canvas.height = 2400; // Tinggi HD
+      canvas.width = 1200;  // Resolusi Tinggi HD
+      canvas.height = 3100;
 
-      ctx.fillStyle = "#1e1e24"; // Background Frame
+      // Warna Bingkai Krem Pastel
+      ctx.fillStyle = "#f5ebd9"; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Watermark
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 45px Arial";
+      // Tanggal Otomatis di Bawah Strip (Format: YYYY.MM.DD)
+      const now = new Date();
+      const dateStr = now.getFullYear() + '.' + 
+                      String(now.getMonth() + 1).padStart(2, '0') + '.' + 
+                      String(now.getDate()).padStart(2, '0');
+
+      ctx.fillStyle = "#6b5344";
+      ctx.font = "bold 55px Arial";
       ctx.textAlign = "center";
-      ctx.fillText("DUAL PHOTOBOOTH ONLINE", canvas.width / 2, canvas.height - 60);
+      ctx.fillText(dateStr, canvas.width / 2, canvas.height - 100);
     }
 
     function captureDualPhoto(slotIndex) {
-      const margin = 60;
-      const gap = 40;
-      const startY = 80;
-      const rowHeight = 680;
+      const margin = 80;
+      const gap = 15; // Berdempetan dekat sesuai gambar
+      const startY = 100;
+      const rowHeight = 520;
 
-      const singleW = (canvas.width - (margin * 2) - gap) / 2; // Kiri & Kanan 670px
-      const singleH = 680;
-      const currentY = startY + slotIndex * (rowHeight + 40);
+      const singleW = (canvas.width - (margin * 2) - gap) / 2; // 512px
+      const singleH = rowHeight; // Square 1:1
+      const currentY = startY + slotIndex * (rowHeight + 35);
 
-      // --- 1. GAMBAR KAMERA KIRI (LOKAL) ---
+      // Gambar Kamera Kiri
       drawVideoToCanvas(localVideo, margin, currentY, singleW, singleH, true);
 
-      // --- 2. GAMBAR KAMERA KANAN (REMOTE TEMAN) ---
+      // Gambar Kamera Kanan
       drawVideoToCanvas(remoteVideo, margin + singleW + gap, currentY, singleW, singleH, false);
     }
 
@@ -385,7 +378,7 @@
       const vW = videoElem.videoWidth || 640;
       const vH = videoElem.videoHeight || 480;
 
-      // Crop Object-Fit Cover
+      // Crop Center Persegi (1:1)
       const targetRatio = targetW / targetH;
       const videoRatio = vW / vH;
 
@@ -407,6 +400,9 @@
       ctx.rect(targetX, targetY, targetW, targetH);
       ctx.clip();
 
+      // Tambahkan Filter Vintage Sepia pada Canvas
+      ctx.filter = "sepia(0.25) contrast(1.05) brightness(0.95)";
+
       if (isMirror) {
         ctx.translate(targetX + targetW, targetY);
         ctx.scale(-1, 1);
@@ -418,7 +414,6 @@
       ctx.restore();
     }
 
-    // Jalankan Awal
     initCamera();
   </script>
 </body>
