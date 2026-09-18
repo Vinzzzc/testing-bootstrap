@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>!Keke & Davin Photobooth</title>
+  <title>Keke & Davin Photobooth</title>
   <!-- PeerJS untuk koneksi 2 HP -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
@@ -158,11 +158,23 @@
       border: 1px solid #e8dec8;
     }
 
-    .color-options { display: flex; gap: 12px; }
+    .color-options { display: flex; gap: 12px; align-items: center; }
     .color-btn {
       width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; transition: 0.2s;
     }
     .color-btn.active { border-color: #5a4638; transform: scale(1.15); }
+    
+    .bg-img-btn {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 20px;
+      background: #e8dec8;
+      color: #5a4638;
+      border: 2px solid #ccc;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .bg-img-btn.active { border-color: #5a4638; background: #6b5344; color: white; }
 
     .sticker-options {
       display: flex;
@@ -209,7 +221,7 @@
       pointer-events: none;
     }
 
-    /* Stiker Interaktif Bebas Error */
+    /* Stiker Interaktif */
     .draggable-sticker {
       position: absolute;
       width: 55px;
@@ -303,13 +315,14 @@
     <!-- Panel Kustomisasi -->
     <div id="customizationBox" class="customization-box">
       <div>
-        <span style="font-size: 12px; font-weight: bold; color: #6b5344; display:block; margin-bottom:6px;">Pilih Warna Bingkai:</span>
+        <span style="font-size: 12px; font-weight: bold; color: #6b5344; display:block; margin-bottom:6px;">Pilih Background Bingkai:</span>
         <div class="color-options">
-          <div class="color-btn active" style="background: #f5ebd9;" data-color="#f5ebd9"></div>
-          <div class="color-btn" style="background: #ffffff;" data-color="#ffffff"></div>
-          <div class="color-btn" style="background: #1e1e24;" data-color="#1e1e24"></div>
-          <div class="color-btn" style="background: #ffccd5;" data-color="#ffccd5"></div>
-          <div class="color-btn" style="background: #bde0fe;" data-color="#bde0fe"></div>
+          <div class="bg-img-btn active" data-type="image">Gambar BG</div>
+          <div class="color-btn" style="background: #f5ebd9;" data-type="color" data-color="#f5ebd9"></div>
+          <div class="color-btn" style="background: #ffffff;" data-type="color" data-color="#ffffff"></div>
+          <div class="color-btn" style="background: #1e1e24;" data-type="color" data-color="#1e1e24"></div>
+          <div class="color-btn" style="background: #ffccd5;" data-type="color" data-color="#ffccd5"></div>
+          <div class="color-btn" style="background: #bde0fe;" data-type="color" data-color="#bde0fe"></div>
         </div>
       </div>
 
@@ -354,7 +367,6 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const shareBtn = document.getElementById('shareBtn');
     const customizationBox = document.getElementById('customizationBox');
-    const colorBtns = document.querySelectorAll('.color-btn');
     const canvasWrapper = document.getElementById('canvasWrapper');
     const stickerLayer = document.getElementById('stickerLayer');
 
@@ -362,8 +374,14 @@
     let dataConnection = null;
     let localStream = null;
     let isConnected = false;
-    let isHost = true; // Host = Buat room (Selalu Kiri), Guest = Masuk room (Selalu Kanan)
+    let isHost = true; 
+    
+    // Konfigurasi Background Default Gambar
+    let bgType = "image"; // 'image' atau 'color'
     let currentBgColor = "#f5ebd9";
+    const bgImage = new Image();
+    bgImage.src = 'gambar/bg-fotostrip.jpg'; // Path gambar latar belakang
+
     let capturedPhotoFrames = []; 
     let activeStickers = [];
 
@@ -460,7 +478,7 @@
       activeStickers = [];
 
       for (let i = 0; i < 4; i++) {
-        await runCountdown(10); // Timer 15 detik
+        await runCountdown(15); 
         captureDualPhotoData();
       }
 
@@ -529,13 +547,17 @@
       targetCtx.drawImage(videoElem, sX, sY, sW, sH, 0, 0, tW, tH);
     }
 
-    // Render Strip Utama
+    // Render Strip Utama (Dengan Opsi Gambar BG Default)
     function renderFinalStrip() {
       canvas.width = 800;  
       canvas.height = 1920; 
 
-      ctx.fillStyle = currentBgColor; 
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (bgType === 'image' && bgImage.complete && bgImage.naturalWidth !== 0) {
+        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.fillStyle = currentBgColor; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
 
       const padding = 35; 
       const photoW = 365;  
@@ -548,7 +570,7 @@
         ctx.drawImage(frame.right, padding + photoW, currentY, photoW, photoH);
       });
 
-      const textColor = (currentBgColor === "#1e1e24") ? "#ffffff" : "#6b5344";
+      const textColor = (bgType === 'color' && currentBgColor === "#1e1e24") ? "#ffffff" : "#6b5344";
       const bottomStartY = padding + 4 * (photoH + gapY) + 40;
 
       ctx.fillStyle = textColor;
@@ -565,7 +587,25 @@
       ctx.fillText(dateStr, canvas.width / 2, bottomStartY + 45);
     }
 
-    // --- MANAJEMEN STIKER BEBAS ERROR ---
+    // Switch Background (Gambar vs Warna)
+    document.querySelectorAll('.color-options div').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.color-options div').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const type = btn.getAttribute('data-type');
+        if (type === 'image') {
+          bgType = 'image';
+        } else {
+          bgType = 'color';
+          currentBgColor = btn.getAttribute('data-color');
+        }
+
+        if (capturedPhotoFrames.length > 0) { renderFinalStrip(); }
+      });
+    });
+
+    // --- MANAJEMEN STIKER ---
     function addSticker(imgUrl) {
       const stickerEl = document.createElement('div');
       stickerEl.className = 'draggable-sticker selected';
@@ -601,7 +641,6 @@
       };
       activeStickers.push(stickerData);
 
-      // Event listener tombol kontrol stiker
       controls.addEventListener('pointerdown', (e) => e.stopPropagation());
       controls.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -620,7 +659,6 @@
         updateStickerTransform(stickerData);
       });
 
-      // Pointer drag smooth
       stickerEl.addEventListener('pointerdown', (e) => {
         if (e.target.tagName === 'BUTTON') return;
         document.querySelectorAll('.draggable-sticker').forEach(el => el.classList.remove('selected'));
@@ -652,15 +690,6 @@
       data.element.style.height = data.size + 'px';
       data.element.style.transform = `rotate(${data.rotation}deg)`;
     }
-
-    colorBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        colorBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentBgColor = btn.getAttribute('data-color');
-        if (capturedPhotoFrames.length > 0) { renderFinalStrip(); }
-      });
-    });
 
     async function renderStickersToCanvas(targetCtx, targetCanvas) {
       const displayRect = canvas.getBoundingClientRect();
@@ -713,17 +742,14 @@
       sCtx.drawImage(canvas, 0, 0);
       await renderStickersToCanvas(sCtx, singleCanvas);
 
-      // Standar Instagram Story Canvas HD 1080 x 1920
       const shareCanvas = document.createElement('canvas');
       shareCanvas.width = 1080;
       shareCanvas.height = 1920;
       const shCtx = shareCanvas.getContext('2d');
 
-      // Background Estetik
       shCtx.fillStyle = "#f4efe6";
       shCtx.fillRect(0, 0, shareCanvas.width, shareCanvas.height);
 
-      // Judul Nama
       shCtx.fillStyle = "#5a4638";
       shCtx.font = "bold 58px 'Comic Sans MS', sans-serif";
       shCtx.textAlign = "center";
@@ -733,26 +759,22 @@
       shCtx.fillStyle = "#8c7a6b";
       shCtx.fillText("our photobooth collection", shareCanvas.width / 2, 235);
 
-      // Mengatur Ukuran 2 Strip Berdampingan
       const stripW = 430;
       const stripH = (canvas.height / canvas.width) * stripW;
       const startY = 300;
 
-      // Strip Kiri (HD)
       shCtx.save();
       shCtx.shadowColor = "rgba(0,0,0,0.15)";
       shCtx.shadowBlur = 25;
       shCtx.drawImage(singleCanvas, 80, startY, stripW, stripH);
       shCtx.restore();
 
-      // Strip Kanan (HD)
       shCtx.save();
       shCtx.shadowColor = "rgba(0,0,0,0.15)";
       shCtx.shadowBlur = 25;
       shCtx.drawImage(singleCanvas, 570, startY, stripW, stripH);
       shCtx.restore();
 
-      // Download Gambar IG Story HD
       const link = document.createElement('a');
       link.download = 'Keke_Davin_IG_Story.png';
       link.href = shareCanvas.toDataURL('image/png', 1.0);
