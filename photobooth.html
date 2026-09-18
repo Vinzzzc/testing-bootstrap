@@ -323,7 +323,7 @@
     </div>
     <div class="video-container">
       <span class="label" id="rightLabel">Kanan (Guest)</span>
-      <video id="rightVideo" class="mirror" autoplay playsinline></video>
+      <video id="rightVideo" class="mirror" autoplay playsinline muted></video>
     </div>
   </div>
 
@@ -428,38 +428,68 @@
     }
 
     function initPeer() {
-      peer = new Peer(myCode);
-      peer.on('open', (id) => { myCodeDisplay.innerText = id; });
+      peer = new Peer(myCode, {
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ]
+        }
+      });
+
+      peer.on('open', (id) => { 
+        myCodeDisplay.innerText = id; 
+      });
+
+      peer.on('error', (err) => {
+        console.error("PeerJS Error:", err);
+      });
       
+      // Jika HP ini menerima panggilan dari lawan (HP A menerima panggilan dari HP B)
       peer.on('call', (call) => {
         isHost = true;
         updateRoleLabels();
-        call.answer(localStream);
+        call.answer(localStream); // Kirim stream lokal kita ke penyambung
+        
         call.on('stream', (remoteStream) => {
           rightVideo.srcObject = remoteStream;
+          rightVideo.play().catch(e => console.log(e));
           setConnectedState();
         });
       });
 
+      // Menerima koneksi data
       peer.on('connection', (conn) => {
         dataConnection = conn;
         setupDataListener();
       });
     }
 
+    // Tombol SAMBUNGKAN di-klik oleh Guest (HP B)
     joinBtn.addEventListener('click', () => {
       const targetCode = joinCodeInput.value.trim();
-      if (!targetCode || targetCode.length !== 6) { alert("Masukkan 6 digit kode room!"); return; }
+      if (!targetCode || targetCode.length !== 6) { 
+        alert("Masukkan 6 digit kode room!"); 
+        return; 
+      }
       
       isHost = false;
       updateRoleLabels();
+
+      // HP B menetapkan video sendiri di sebelah Kanan
       rightVideo.srcObject = localStream;
 
-      const call = peer.call(targetCode, localStream);
-      call.on('stream', (remoteStream) => {
+      // 1. Hubungi Host (HP A) lewat panggilan media WebRTC
+      const mediaCall = peer.call(targetCode, localStream);
+      
+      // PERBAIKAN UTAMA: Tangkap balikan video stream dari HP A agar HP B bisa melihat kamera HP A di sebelah Kiri
+      mediaCall.on('stream', (remoteStream) => {
         leftVideo.srcObject = remoteStream;
+        leftVideo.play().catch(e => console.log(e));
         setConnectedState();
       });
+
+      // 2. Buat koneksi data untuk sinkronisasi tombol foto & stiker
       dataConnection = peer.connect(targetCode);
       setupDataListener();
     });
